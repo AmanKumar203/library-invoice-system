@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-page="invoice">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Study Library — Invoice & Dashboard</title>
+    <meta name="description" content="Generate professional invoices, track payments, and manage student memberships for Modern Study Library.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- jsPDF CDN & QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    
+    <!-- Modular Stylesheet -->
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+
+    <!-- Animated Ambient Canvas -->
+    <div class="bg-canvas" aria-hidden="true">
+        <div class="orb orb--1"></div>
+        <div class="orb orb--2"></div>
+        <div class="orb orb--3"></div>
+    </div>
+
+    <!-- Live Toast Container -->
+    <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
+    <!-- ═══ STICKY HEADER ═══ -->
+    <header class="app-header glass-card">
+        <div class="brand">
+            <div class="brand-icon" aria-hidden="true">M</div>
+            <div class="brand-text">
+                <h1>Modern Study Library</h1>
+                <p>Study &bull; Focus &bull; Success</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <nav class="nav-tabs" aria-label="Main navigation">
+                <button class="nav-tab active" data-page="invoice" id="navInvoice">Invoice</button>
+                <button class="nav-tab" data-page="history" id="navHistory">Dashboard</button>
+            </nav>
+            <button class="sound-toggle" id="btnSettings" type="button" aria-label="Library Profile & Settings" title="Library Profile & Default Settings">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </button>
+            <button class="sound-toggle" id="soundToggle" type="button" aria-label="Toggle sound effects" title="Sound effects">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+            </button>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark/light mode" title="Toggle theme">
+                <div class="theme-toggle-icons">
+                    <span aria-hidden="true" style="font-size:12px;">&#9790;</span>
+                    <span aria-hidden="true" style="font-size:12px;">&#9788;</span>
+                </div>
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PAGE: INVOICE BUILDER
+         ═══════════════════════════════════════════════════════ -->
+    <div class="page active" id="pageInvoice" data-page="invoice">
+        <div class="invoice-layout">
+
+            <!-- FORM PANEL -->
+            <main class="form-panel glass-card" role="main">
+                <div class="invoice-meta">
+                    <span id="invoiceNumber"></span>
+                    <span id="currentDate"></span>
+                </div>
+
+                <form id="invoiceForm" novalidate>
+
+                    <!-- Student Details -->
+                    <fieldset style="border:none;">
+                        <legend class="section-title">Student Details</legend>
+
+                        <div class="photo-upload-area" id="photoArea" title="Upload student photo">
+                            <span class="placeholder" id="photoPlaceholder" style="opacity:0.5;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                    <circle cx="12" cy="13" r="4" />
+                                </svg>
+                            </span>
+                            <img id="photoPreview" style="display:none;" alt="Student photo">
+                            <input type="file" id="photoInput" accept="image/*" aria-label="Upload student photo">
+                        </div>
+
+                        <div class="form-group" style="position:relative;">
+                            <label for="studentName">Student Name</label>
+                            <input type="text" id="studentName" placeholder="Enter full name" required aria-required="true" autocomplete="off">
+                            <div class="autocomplete-list" id="nameAutocomplete"></div>
+                            <div class="error-msg" id="studentNameError">Please enter the student name</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fatherName">Father's Name</label>
+                            <input type="text" id="fatherName" placeholder="Enter father's name" required aria-required="true">
+                            <div class="error-msg" id="fatherNameError">Please enter father's name</div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mobile">Mobile Number</label>
+                                <input type="tel" id="mobile" placeholder="98XXX XXXXX" required maxlength="12" aria-required="true" inputmode="numeric">
+                                <div class="error-msg" id="mobileError">Enter valid 10-digit number</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="seat">Seat Number</label>
+                                <input type="text" id="seat" placeholder="e.g. A-12" required aria-required="true">
+                                <div class="error-msg" id="seatError">Please enter seat number</div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Membership Details -->
+                    <fieldset style="border:none;">
+                        <legend class="section-title">Membership Details</legend>
+
+                        <div class="form-group">
+                            <label for="plan">Plan Type</label>
+                            <select id="plan">
+                                <option value="monthly">Monthly (1 Month)</option>
+                                <option value="quarterly">Quarterly (3 Months)</option>
+                                <option value="halfyearly">Half Yearly (6 Months)</option>
+                                <option value="yearly">Yearly (12 Months)</option>
+                                <option value="custom">Custom Plan</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row" id="customPlanRow" style="display:none;">
+                            <div class="form-group">
+                                <label for="customPlanName">Plan Name</label>
+                                <input type="text" id="customPlanName" placeholder="e.g. Weekend Only">
+                            </div>
+                            <div class="form-group">
+                                <label for="customPlanMonths">Duration (months)</label>
+                                <input type="number" id="customPlanMonths" placeholder="e.g. 2" min="1" max="24">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="joining">Joining Date</label>
+                                <input type="date" id="joining" required aria-required="true">
+                            </div>
+                            <div class="form-group">
+                                <label for="expiry">Expiry Date</label>
+                                <input type="date" id="expiry" readonly aria-describedby="expiryHint" style="opacity:0.7;cursor:not-allowed;">
+                                <div id="expiryHint" style="font-size:11px;color:var(--text-muted);margin-top:3px;">Auto-calculated from plan</div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Payment Details -->
+                    <fieldset style="border:none;">
+                        <legend class="section-title">Payment Details</legend>
+
+                        <div class="toggle-row">
+                            <span class="toggle-label">Include GST (18%)</span>
+                            <button type="button" class="toggle-switch" id="gstToggle" aria-label="Toggle GST"></button>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="amount">Amount (₹)</label>
+                                <input type="number" id="amount" placeholder="0" required aria-required="true" min="0">
+                                <div class="error-msg" id="amountError">Please enter amount</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Total Payable</label>
+                                <div id="totalDisplay" style="padding:12px 14px;font-family:var(--font-heading);font-size:18px;font-weight:700;color:var(--success);background:var(--input-bg);border-radius:var(--radius-sm);border:1.5px solid var(--input-border);">
+                                    ₹0
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="gstBreakdown" style="display:none;font-size:12px;color:var(--text-muted);margin-bottom:12px;padding:8px 12px;background:var(--input-bg);border-radius:var(--radius-xs);">
+                            <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span id="gstSubtotal">₹0</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span>CGST (9%)</span><span id="gstCgst">₹0</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span>SGST (9%)</span><span id="gstSgst">₹0</span></div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="discountType">Discount</label>
+                                <select id="discountType">
+                                    <option value="none">No Discount</option>
+                                    <option value="flat">Flat (₹)</option>
+                                    <option value="percentage">Percentage (%)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="discountValueGroup" style="display:none;">
+                                <label for="discountValue">Value</label>
+                                <input type="number" id="discountValue" placeholder="0" min="0">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Payment Status</label>
+                            <div class="status-chips">
+                                <button type="button" class="status-chip active-full" id="statusFull">Fully Paid</button>
+                                <button type="button" class="status-chip" id="statusPartial">Partial</button>
+                            </div>
+                        </div>
+
+                        <div class="form-row" id="partialPayRow" style="display:none;">
+                            <div class="form-group">
+                                <label for="amountPaid">Amount Paid (₹)</label>
+                                <input type="number" id="amountPaid" placeholder="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Balance Due</label>
+                                <div id="balanceDue" style="padding:12px 14px;font-family:var(--font-heading);font-size:16px;font-weight:700;color:var(--error);background:var(--input-bg);border-radius:var(--radius-sm);border:1.5px solid var(--input-border);">
+                                    ₹0
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="paymentMode">Payment Mode</label>
+                                <select id="paymentMode">
+                                    <option value="Cash">Cash</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="remarks">Remarks</label>
+                            <textarea id="remarks" placeholder="Any additional notes..."></textarea>
+                        </div>
+                    </fieldset>
+
+                    <div class="action-row">
+                        <button type="submit" class="btn-primary" id="btnGenerate">
+                            <div class="btn-content">
+                                <div class="spinner"></div>
+                                <span class="btn-label">Download PDF <span class="kbd">Ctrl+Enter</span></span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="action-row-secondary">
+                        <button type="button" class="btn-whatsapp" id="btnWhatsapp">
+                            <div class="btn-content"><span class="btn-label">Share on WhatsApp</span></div>
+                        </button>
+                        <button type="button" class="btn-secondary" id="btnNewInvoice">
+                            <div class="btn-content"><span class="btn-label">+ New Invoice</span></div>
+                        </button>
+                        <button type="button" class="btn-secondary" id="btnQuickFill" title="1-Click Fill Sample Data" style="color:var(--teal);background:var(--teal-glow);border-color:rgba(6,182,212,0.3);">
+                            <div class="btn-content"><span class="btn-label">⚡ Quick Fill</span></div>
+                        </button>
+                    </div>
+                </form>
+            </main>
+
+            <!-- LIVE PREVIEW PANEL -->
+            <aside class="preview-panel" aria-label="Live invoice preview">
+                <div class="glass-card" style="position:relative;overflow:hidden;">
+                    <div class="preview-title">Live Preview</div>
+                    <div id="previewContainer"></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PAGE: DASHBOARD & HISTORY
+         ═══════════════════════════════════════════════════════ -->
+    <div class="page" id="pageHistory" data-page="history">
+        <div class="history-layout">
+
+            <!-- STATS CARDS -->
+            <div class="stats-grid">
+                <div class="stat-card glass-card">
+                    <div class="stat-icon purple">&#128100;</div>
+                    <div>
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">Total Invoices</div>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon green">&#8377;</div>
+                    <div>
+                        <div class="stat-value" id="statRevenue">&#8377;0</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon teal">&#9733;</div>
+                    <div>
+                        <div class="stat-value" id="statActive">0</div>
+                        <div class="stat-label">Active Members</div>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon amber">&#9888;</div>
+                    <div>
+                        <div class="stat-value" id="statDue" style="color:var(--error);">&#8377;0</div>
+                        <div class="stat-label">Total Due</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS CHARTS -->
+            <div class="charts-row">
+                <div class="chart-card glass-card">
+                    <div class="chart-title">Revenue (Last 6 Months)</div>
+                    <div class="bar-chart" id="revenueChart"></div>
+                </div>
+                <div class="chart-card glass-card">
+                    <div class="chart-title">Plan Distribution</div>
+                    <div id="planChart"></div>
+                </div>
+            </div>
+
+            <!-- CONTROLS -->
+            <div class="history-controls">
+                <input type="text" class="search-box" id="historySearch" placeholder="Search by student name, seat, mobile, or invoice no..." aria-label="Search invoices">
+                <select class="filter-select" id="historyFilter" aria-label="Filter by payment status">
+                    <option value="all">All Status</option>
+                    <option value="full">Paid</option>
+                    <option value="partial">Due</option>
+                </select>
+                <select class="filter-select" id="historyPlanFilter" aria-label="Filter by plan">
+                    <option value="all">All Plans</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="halfyearly">Half Yearly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="custom">Custom</option>
+                </select>
+                <button type="button" class="btn-export" id="btnExport">Export CSV</button>
+            </div>
+
+            <!-- INVOICE TABLE -->
+            <div class="glass-card" style="padding:0;overflow:hidden;">
+                <div id="historyTableContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SETTINGS MODAL (LIBRARY PROFILE & PRESETS)
+         ═══════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="settingsTitle">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Library Profile & Settings
+                </h3>
+                <button type="button" class="modal-close" id="btnCloseSettings" aria-label="Close settings">&times;</button>
+            </div>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label for="cfgLibraryName">Library Name</label>
+                    <input type="text" id="cfgLibraryName" placeholder="e.g. Modern Study Library">
+                </div>
+                <div class="form-group">
+                    <label for="cfgTagline">Tagline</label>
+                    <input type="text" id="cfgTagline" placeholder="e.g. Study • Focus • Success">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cfgPhone">Contact Phone (On Invoice & PDF)</label>
+                        <input type="tel" id="cfgPhone" placeholder="e.g. 98765 43210">
+                    </div>
+                    <div class="form-group">
+                        <label for="cfgEmail">Contact Email</label>
+                        <input type="email" id="cfgEmail" placeholder="e.g. info@modernstudylib.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cfgAddress">Address / Location</label>
+                    <input type="text" id="cfgAddress" placeholder="e.g. Main Branch, Library Road">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cfgDefaultPlan">Default Plan</label>
+                        <select id="cfgDefaultPlan">
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly (3M)</option>
+                            <option value="halfyearly">Half Yearly (6M)</option>
+                            <option value="yearly">Yearly (12M)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="cfgDefaultMode">Default Payment Mode</label>
+                        <select id="cfgDefaultMode">
+                            <option value="Cash">Cash</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cfgSeatPrefix">Seat Prefix</label>
+                    <input type="text" id="cfgSeatPrefix" placeholder="e.g. A-">
+                </div>
+                <div class="action-row" style="margin-top:20px;">
+                    <button type="submit" class="btn-primary" style="flex:1;">Save Settings</button>
+                    <button type="button" class="btn-secondary" id="btnResetSettings">Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ MODULAR JAVASCRIPT BUNDLE ═══ -->
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/pdf-generator.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/invoice.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>
